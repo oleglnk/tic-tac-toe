@@ -1,192 +1,39 @@
-//==================================================//
-//   Copyright © 2021 Oleg Oleynik                  //
-//   Author:  Oleg Oleynik                          //
-//   License: MIT License (X11 License)             //
-//==================================================//
+//==================================================
+//
+// Copyright © 2021-2022 Oleg Oleynik
+// License: MIT License (X11 License)
+//
+//==================================================
 
 #include "player.h"
 
-#include "field.h"
-
-#include "utils.h"
+#include "io.h"
 
 #include <string.h>
+//TODO: Delete in C23
+#include <stdbool.h>
 
-//==================================================//
-//                                                  //
-//               DECLARATION SECTION                //
-//                                                  //
-//==================================================//
+//=============    PRIVATE SECTION    ==============//
 
-#define T3_MOVE_AI_HUMAN    PLAYER_1
-#define T3_MOVE_AI          PLAYER_2
-#define T3_PLAYER_FILENAME  "default.t3"
+#define MOVE_AI_HUMAN    cell_player1
+#define MOVE_AI          cell_player2
 
-typedef struct  t3_tag_Move                 Move;
-
-typedef void(*t3MoveCompareAI)(Move * best_move, Move const * move, Cell move_cur);
-
-enum t3_tag_PLAYER_RATING
-{
-    RATE_HUMAN   = 1000,
-    RATE_AI_EASY = 1000,
-    RATE_AI_NORM = 2000,
-    RATE_AI_HARD = 2500,
-};
-
-struct t3_tag_Move
+typedef struct Move_tag
 {
     int score;
     int index;
-};
+} Move;
 
-static t3MoveCompareAI                      compare;
-static Field                                ai_field;
-static int                                  empty_cell_count;
+typedef void(*MoveCompareAI)(Move * best_move, Move const * move, Cell const move_cur);
 
-static int      t3TurnPlayer                (Field const * field);
-static int      t3TurnAiEasy                (Field const * field);
-static int      t3TurnAiNorm                (Field const * field);
-static int      t3TurnAiHard                (Field const * field);
+static MoveCompareAI compare;
+static Field         ai_field;
+static size_t        empty_cell_count;
 
-static Move     t3MiniMax                   (Field       * field, Cell move_cur);
-
-static void     t3MoveCompareNormAI         (Move * best_move, Move const * move, Cell move_cur);
-static void     t3MoveCompareHardAI         (Move * best_move, Move const * move, Cell move_cur);
-
-static char*    t3RemoveSpaces              (char * s);
-static void     t3NameGet                   (char * name, int auto_select);
-
-
-
-void            t3PlayerFactory             (Player * player, PlayerType type)
-{
-    char name[T3_PLAYER_NAME_SIZE_MAX];
-    if (type == HUMAN)
-        t3NameGet(name, false);
-    else
-        t3NameGet(name, true);
-    switch (type)
-    {
-    case HUMAN:
-        player->mmr  = RATE_HUMAN;
-        player->turn = t3TurnPlayer;
-        strncpy(player->name, name, T3_PLAYER_NAME_SIZE_MAX);
-        break;
-    case AI_EASY:
-        player->mmr  = RATE_AI_EASY;
-        player->turn = t3TurnAiEasy;
-        strncpy(player->name, name, T3_PLAYER_NAME_SIZE_MAX);
-        break;
-    case AI_NORM:
-        player->mmr  = RATE_AI_NORM;
-        player->turn = t3TurnAiNorm;
-        strncpy(player->name, name, T3_PLAYER_NAME_SIZE_MAX);
-        break;
-    case AI_HARD:
-        player->mmr  = RATE_AI_HARD;
-        player->turn = t3TurnAiHard;
-        strncpy(player->name, name, T3_PLAYER_NAME_SIZE_MAX);
-        break;
-    }
-}
-bool            t3PlayerDelete              (Player * player)
-{
-    return (!remove(T3_PLAYER_FILENAME));
-}
-
-bool            t3PlayerLoad                (Player * player)
-{
-    FILE *pFile = fopen(T3_PLAYER_FILENAME, "rb");
-    bool success = false;
-    if (pFile)
-    {
-        char buffer[2];
-        fread(buffer, sizeof(char), 2, pFile);
-
-        if (('T' == buffer[0]) && ('3' == buffer[1]))
-        {
-            fread(player->name, sizeof(player->name[0]), T3_PLAYER_NAME_SIZE_MAX, pFile);
-            fread(&player->mmr, sizeof(player->mmr), 1, pFile);
-            
-            success = true;
-        }
-        fclose(pFile);
-    }
-    return success;
-}
-
-void      t3PlayerSave                      (Player const * player)
-{
-    FILE *pFile = fopen(T3_PLAYER_FILENAME, "wb");
-    if (pFile)
-    {
-        fwrite("T3", sizeof(char), 2, pFile);
-        fwrite(player->name, sizeof(player->name[0]), T3_PLAYER_NAME_SIZE_MAX, pFile);
-        fwrite(&player->mmr, sizeof(player->mmr), 1, pFile);
-        fclose(pFile);
-    }
-}
-
-//==================================================//
-//                                                  //
-//                  PRIVATE SECTION                 //
-//                                                  //
-//==================================================//
-
-int t3TurnPlayer(Field const * field)
-{
-    Key key;
-    while (1)
-    {
-        key = t3InputGet(T3_NULLPTR);
-        if (T3_KEY_UNDEFINED == key)
-        {
-            puts("Wrong cell number! Please try again.");
-        }
-        else
-        {
-            int index = (int)key - (int)T3_KEY_NUM_1;
-            if (field->cell[index] != EMPTY)
-                puts("Cell is already occupied! Please try again.");
-            else
-                return index;
-        }
-    }
-}
-
-int             t3TurnAiEasy                (Field const * field)
-{
-    static int empty_cells[FIELD_SIZE];
-    int i;
-    empty_cell_count = 0;
-    for (i = 0; i < FIELD_SIZE; i++)
-    {
-        if (field->cell[i] == EMPTY)
-        {
-            empty_cells[empty_cell_count] = i;
-            empty_cell_count++;
-        }
-    }
-    i = t3RandomInt(0, empty_cell_count - 1);
-    return empty_cells[i];
-}
-
-int             t3TurnAiNorm                (Field const * field)
-{
-    compare = t3MoveCompareNormAI;
-    t3FieldCopy(&ai_field, field);
-    return t3MiniMax(&ai_field, T3_MOVE_AI).index;
-}
-
-int             t3TurnAiHard                (Field const * field)
-{
-    compare = t3MoveCompareHardAI;
-    t3FieldCopy(&ai_field, field);
-    return t3MiniMax(&ai_field, T3_MOVE_AI).index;
-}
-
-void            t3MoveCompareNormAI         (Move * best_move, Move const * move, Cell move_cur)
+static void t3MoveCompareNormAI(
+    Move       * best_move,
+    Move const * move,
+    Cell const   move_cur)
 {
     if (move->score > best_move->score)
     {
@@ -195,9 +42,12 @@ void            t3MoveCompareNormAI         (Move * best_move, Move const * move
     }
 }
 
-void            t3MoveCompareHardAI         (Move * best_move, Move const * move, Cell move_cur)
+static void t3MoveCompareHardAI(
+    Move       * best_move,
+    Move const * move,
+    Cell const   move_cur)
 {
-    if (move_cur == T3_MOVE_AI)
+    if (move_cur == MOVE_AI)
     {
         if (move->score > best_move->score)
         {
@@ -215,30 +65,32 @@ void            t3MoveCompareHardAI         (Move * best_move, Move const * move
     }
 }
 
-Move            t3MiniMax                   (Field * field, Cell move_cur)
+static Move t3MiniMax(
+    Field       * field,
+    Cell  const   move_cur)
 {
     Move move, best_move;
-    best_move.score = (move_cur == T3_MOVE_AI) ? -10000 : 10000;
+    best_move.score = (move_cur == MOVE_AI) ? -10000 : 10000;
     int i = 0;
     best_move.index = 0;
     while (i < FIELD_SIZE)
     {
-        if (EMPTY == field->cell[i])
+        if (cell_empty == field->cell[i])
         {
             field->empty_cell_count--;
             field->cell[i] = move_cur;
 
             switch (t3FieldGetStatus(field))
             {
-            case IN_PROGRESS:
-                move = t3MiniMax(field, (T3_MOVE_AI_HUMAN == move_cur) ? T3_MOVE_AI : T3_MOVE_AI_HUMAN);
+            case fs_in_progress:
+                move = t3MiniMax(field, (MOVE_AI_HUMAN == move_cur) ? MOVE_AI : MOVE_AI_HUMAN);
                 break;
-            case END_WIN_P1: move.score = -1; break;
-            case END_WIN_P2: move.score = +1; break;
-            default:         move.score =  0; break;
+            case fs_end_win_p1: move.score = -1; break;
+            case fs_end_win_p2: move.score = +1; break;
+            default:            move.score =  0; break;
             }
 
-            field->cell[i] = EMPTY;
+            field->cell[i] = cell_empty;
             empty_cell_count++;
 
             compare(&best_move, &move, move_cur);
@@ -248,7 +100,66 @@ Move            t3MiniMax                   (Field * field, Cell move_cur)
     return best_move;
 }
 
-char*           t3RemoveSpaces              (char * s)
+static size_t t3TurnPlayer(
+    Field const * field)
+{
+    Key key;
+    while (1)
+    {
+        key = t3GetKey(nullptr);
+        if (t3_key_None == key)
+        {
+            puts("Wrong cell number! Please try again.");
+        }
+        else
+        {
+            size_t index = (size_t)key - (size_t)t3_key_num1;
+            if (field->cell[index] != cell_empty)
+                puts("Cell is already occupied! Please try again.");
+            else
+                return index;
+        }
+    }
+}
+
+static size_t t3TurnAiEasy(
+    Field const * field)
+{
+    int max_chances = 0;
+    size_t index = FIELD_SIZE;
+    for (size_t i = 0; i < FIELD_SIZE; i++)
+    {
+        if (field->cell[i] == cell_empty)
+        {
+            int chances = rand();
+            if ( (index == FIELD_SIZE) ||
+                ((index >= 0) && (max_chances < chances)))
+            {
+                index = i;
+                max_chances = chances;
+            }
+        }
+    }
+    return index;
+}
+
+static size_t t3TurnAiNorm(
+    Field const * field)
+{
+    compare = t3MoveCompareNormAI;
+    t3FieldCopy(&ai_field, field);
+    return t3MiniMax(&ai_field, MOVE_AI).index;
+}
+
+static size_t t3TurnAiHard(
+    Field const * field)
+{
+    compare = t3MoveCompareHardAI;
+    t3FieldCopy(&ai_field, field);
+    return t3MiniMax(&ai_field, MOVE_AI).index;
+}
+
+static char * t3RemoveSpaces(char * s)
 {
     char* d = s;
     do
@@ -259,15 +170,17 @@ char*           t3RemoveSpaces              (char * s)
     return s;
 }
 
-void            t3NameGet                  (char * name, int auto_select)
+static void t3NameGet(
+    char       * name,
+    bool const   auto_select)
 {
     if (auto_select)
     {
         static char const * names[] = {
             "John", "Bob",
             "Jessica", "Alice"};
-        int i = t3RandomInt(0, 4);
-        strncpy(name, names[i], T3_PLAYER_NAME_SIZE_MAX);
+        size_t i = rand() % (sizeof(names) / sizeof(names[0]));
+        strncpy(name, names[i], PLAYERNAME_SIZE_MAX);
     }
     else
     {
@@ -275,12 +188,27 @@ void            t3NameGet                  (char * name, int auto_select)
         size_t read_count;
         while (1)
         {
-            read_count = fread(name, sizeof(char), T3_PLAYER_NAME_SIZE_MAX, stdin);
+            read_count = fread(name, sizeof(char), PLAYERNAME_SIZE_MAX, stdin);
             name[read_count - 1] = '\0';
             if (t3RemoveSpaces(name))
                 break;
             else
                 puts("Incorrect input!");
         }
+    }
+}
+
+
+//==============    PUBLIC SECTION    ==============//
+
+void t3PlayerFactory(Player * player, PlayerType const type)
+{
+    t3NameGet(player->name, !(type == pl_human));
+    switch (type)
+    {
+    case pl_human:   player->turn = t3TurnPlayer; break;
+    case pl_ai_easy: player->turn = t3TurnAiEasy; break;
+    case pl_ai_norm: player->turn = t3TurnAiNorm; break;
+    case pl_ai_hard: player->turn = t3TurnAiHard; break;
     }
 }

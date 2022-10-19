@@ -1,20 +1,23 @@
-//==================================================//
-//   Copyright © 2021 Oleg Oleynik                  //
-//   Author:  Oleg Oleynik                          //
-//   License: MIT License (X11 License)             //
-//==================================================//
+//==================================================
+//
+// Copyright © 2021-2022 Oleg Oleynik
+// License: MIT License (X11 License)
+//
+//==================================================
 
 #include "field.h"
 
-#define T3_TIPS_ENABLED
+#include "io.h"
 
-void	t3FieldInit(
-	Field			  * field,
-	char		const   symbol_player_1, 
-	char		const   symbol_player_2)
+//==============    PUBLIC SECTION    ==============//
+
+void t3FieldInit(
+	Field         * field,
+	char    const   symbol_player_1, 
+	char    const   symbol_player_2)
 {
     for (int i = 0; i < FIELD_SIZE; i++)
-        field->cell[i] = EMPTY;
+        field->cell[i] = cell_empty;
     
     field->empty_cell_count = FIELD_SIZE;
 
@@ -22,9 +25,9 @@ void	t3FieldInit(
     field->symbol_player_2  = symbol_player_2;
 }
 
-void	t3FieldCopy(
-	Field			  * dest,
-	Field		const * src)
+void t3FieldCopy(
+	Field	      * dest,
+	Field	const * src)
 {
     for (int i = 0; i < FIELD_SIZE; i++)
         dest->cell[i] = src->cell[i];
@@ -35,8 +38,8 @@ void	t3FieldCopy(
     dest->symbol_player_2 = src->symbol_player_2;
 }
 
-void	t3FieldShow(
-	Field		const * field)
+void t3FieldShow(
+	Field	const * field)
 {
     for (int i = 0; i < FIELD_SIZE; i++)
     {
@@ -44,9 +47,9 @@ void	t3FieldShow(
         
         switch (field->cell[i])
         {
-        case EMPTY:    putchar(' '); break;
-        case PLAYER_1: putchar(field->symbol_player_1); break;
-        case PLAYER_2: putchar(field->symbol_player_2); break;
+        case cell_empty:   putchar(' '); break;
+        case cell_player1: putchar(field->symbol_player_1); break;
+        case cell_player2: putchar(field->symbol_player_2); break;
         }
         putchar(' ');
 
@@ -59,7 +62,7 @@ void	t3FieldShow(
                 puts("---+---+---");
         }
     }
-#ifdef T3_TIPS_ENABLED
+#ifdef TIPS_ENABLED
     puts("");
     puts("Enter number of cell from 1 to 9 to make turn.");
     puts("Except already filled cells.");
@@ -82,15 +85,15 @@ void	t3FieldShow(
 #endif
 }
 
-FieldStatus     t3FieldGetStatus(
-	Field		const * field)
+FieldStatus t3FieldGetStatus(
+	Field	const * field)
 {
     if (field->cell[0])
     {
         if ((field->cell[0] == field->cell[1] && field->cell[0] == field->cell[2]) ||
             (field->cell[0] == field->cell[3] && field->cell[0] == field->cell[6]))
         {
-            return (field->cell[0] == PLAYER_1) ? END_WIN_P1 : END_WIN_P2;
+            return (field->cell[0] == cell_player1) ? fs_end_win_p1 : fs_end_win_p2;
         }
     }
     if (field->cell[4])
@@ -100,16 +103,16 @@ FieldStatus     t3FieldGetStatus(
             (field->cell[4] == field->cell[2] && field->cell[4] == field->cell[6]) ||
             (field->cell[4] == field->cell[3] && field->cell[4] == field->cell[5]))
         {
-            return (field->cell[4] == PLAYER_1) ? END_WIN_P1 : END_WIN_P2;
+            return (field->cell[4] == cell_player1) ? fs_end_win_p1 : fs_end_win_p2;
         }
     }
-    if (field->cell[8] != EMPTY)
+    if (field->cell[8])
     {
         if ((field->cell[8] == field->cell[6] && field->cell[8] == field->cell[7]) ||
             (field->cell[8] == field->cell[2] && field->cell[8] == field->cell[5]))
         {
-            return (field->cell[8] == PLAYER_1) ? END_WIN_P1 : END_WIN_P2;
+            return (field->cell[8] == cell_player1) ? fs_end_win_p1 : fs_end_win_p2;
         }
     }
-    return (0 == field->empty_cell_count) ? END_DRAW : IN_PROGRESS;
+    return (field->empty_cell_count) ? fs_in_progress : fs_end_draw;
 }

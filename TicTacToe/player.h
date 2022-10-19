@@ -1,33 +1,38 @@
-//==================================================//
-//   Copyright © 2021 Oleg Oleynik                  //
-//   Author:  Oleg Oleynik                          //
-//   License: MIT License (X11 License)             //
-//==================================================//
+//==================================================
+//
+// Copyright © 2021-2022 Oleg Oleynik
+// License: MIT License (X11 License)
+//
+//==================================================
 
-#ifndef H_PLAYER_T3_INCLUDED_
-#define H_PLAYER_T3_INCLUDED_
+#ifndef H_PLAYER_INCLUDED_
+#define H_PLAYER_INCLUDED_
 
-#include "utils.h"
+#include "field.h"
 
-#define T3_PLAYER_NAME_SIZE_MAX 21
+#define PLAYERNAME_SIZE_MAX 21
 
-enum t3_tag_PlayerType
+typedef enum PlayerType_tag
 {
-    HUMAN,
-    AI_EASY,
-    AI_NORM,
-    AI_HARD,
-};
+    pl_human,
+    pl_ai_easy,
+    pl_ai_norm,
+    pl_ai_hard
+} PlayerType;
 
-typedef int(*TakeTurn)(Field const * field);
 
-struct t3_tag_Player
+typedef unsigned int uint;
+//TODO: check why using size_t instead of uint causes errors
+typedef uint (*MakeTurn)(Field const * field);
+typedef void* TakeTurn;
+
+typedef struct Player_tag
 {
-    char        name[T3_PLAYER_NAME_SIZE_MAX]; //Name
-    TakeTurn    turn;                          //Pointer to function of making turn
-};
+    char        name[PLAYERNAME_SIZE_MAX]; //Name
+    TakeTurn    turn;                      //Pointer to function of making turn
+} Player;
 
 
-void            t3PlayerFactory             (Player       * player, PlayerType type);
+void    t3PlayerFactory(Player * player, PlayerType const type);
 
 #endif

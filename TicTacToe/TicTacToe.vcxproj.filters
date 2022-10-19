@@ -1,16 +1,42 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="utils.c" />
     <ClCompile Include="TicTacToe.c" />
-    <ClCompile Include="player.c" />
-    <ClCompile Include="game.c" />
-    <ClCompile Include="field.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="field.h" />
-    <ClInclude Include="game.h" />
-    <ClInclude Include="player.h" />
-    <ClInclude Include="utils.h" />
+    <ClCompile Include="io.c">
+      <Filter>io</Filter>
+    </ClCompile>
+    <ClCompile Include="field.c">
+      <Filter>Field</Filter>
+    </ClCompile>
+    <ClCompile Include="game.c">
+      <Filter>Game</Filter>
+    </ClCompile>
+    <ClCompile Include="player.c">
+      <Filter>Player</Filter>
+    </ClCompile>
+	<ClInclude Include="io.h">
+      <Filter>io</Filter>
+    </ClInclude>
+    <ClInclude Include="field.h">
+      <Filter>Field</Filter>
+    </ClInclude>
+    <ClInclude Include="game.h">
+      <Filter>Game</Filter>
+    </ClInclude>
+    <ClInclude Include="player.h">
+      <Filter>Player</Filter>
+    </ClInclude>
+    <Filter Include="io">
+      <UniqueIdentifier>{cc61a696-4446-4b44-b749-b1bb4b0a56f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Field">
+      <UniqueIdentifier>{eae6c8da-b09b-4288-b683-c58670022ade}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game">
+      <UniqueIdentifier>{1debf1dd-668d-4148-af53-b46ac9252a54}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Player">
+      <UniqueIdentifier>{b2e1e263-9890-4caf-935e-b77bcafcbc18}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

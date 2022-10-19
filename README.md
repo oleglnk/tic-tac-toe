@@ -1,10 +1,12 @@
 # TODO:
-- Force to work (Fix, a lot of fixes)
+- Test functionality
 - Delete All bugs
 - Delete All Warnings
-- Fill board on Trello
+- Check up Trello board for more TODO
+- Fill up README
+- Passionately wait for C23 to delete some code
 
-##More
+## More
 Read additional information in blog (section 'Projects' is under construction right now) on my [website](https://oleglnk.pages.dev/posts/).
 
 More details on [Trello](https://trello.com/b/EYPq4MrP)
