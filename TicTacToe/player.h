@@ -20,11 +20,11 @@ typedef enum PlayerType_tag
     pl_ai_hard
 } PlayerType;
 
-
 typedef unsigned int uint;
-//TODO: check why using size_t instead of uint causes errors
-typedef uint (*MakeTurn)(Field const * field);
-typedef void* TakeTurn;
+// If you want to change uint to size_t 
+//  then add #include <stddef.h>
+// MVSC x64 can compile size_t without header <==== BUG
+typedef uint (*TakeTurn)(Field const * field);
 
 typedef struct Player_tag
 {

@@ -39,7 +39,13 @@ static Key     t3GetKeyWin(char const * prompt)
     if (GetConsoleMode(hStdIn, &mode) && SetConsoleMode(hStdIn, 0))
     {
         if (prompt)
-            WriteConsole(hStdOut, prompt, lstrlen(prompt), &count, NULL);
+            // UNICODE option is used, so WinApi functions expect wchar_t params
+            // There are 3 options (in fact 5, but project is not so big) :
+            // - use Ansi functions explicitly: 
+            // WriteConsoleA(hStdOut, prompt, lstrlenA(prompt), &count, NULL);
+            // - change chars to wchars 
+            // - use C standard library function
+            printf("%s", prompt);
 
         FlushConsoleInputBuffer(hStdIn);
 

@@ -10,6 +10,6 @@
 
 #include "player.h"
 
-void    t3Game    (Player * player1, Player * player2);
+void    t3Game    (Player * player1, Player * player2, bool const show_tips);
 
 #endif

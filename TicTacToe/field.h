@@ -8,11 +8,12 @@
 #ifndef H_FIELD_INCLUDED_
 #define H_FIELD_INCLUDED_
 
+//TODO: Delete in C23
+#include <stdbool.h>
+
 #define FIELD_SIZE   9
 #define FIELD_WIDTH  3
 #define FIELD_HEIGHT 3
-
-//#define TIPS_ENABLED
 
 typedef enum Cell_tag
 {
@@ -40,7 +41,7 @@ typedef struct Field_tag
 
 void            t3FieldInit         (Field * field, char symbol_player_1, char symbol_player_2);
 void            t3FieldCopy         (Field * dest, Field const * src);
-void            t3FieldShow         (Field const * field);
+void            t3FieldShow         (Field const * field, bool const show_tips);
 FieldStatus     t3FieldGetStatus    (Field const * field);
 
 #endif

@@ -12,6 +12,7 @@
 
 #include "io.h"
 
+
 //=============    PRIVATE SECTION    ==============//
 
 #define PLAYER_COUNT 2
@@ -19,28 +20,39 @@
 static Field        field;
 static Player *     players[PLAYER_COUNT];
 static FieldStatus  game_status;
+static bool         show_tips;
+
+static void t3GameShow(void)
+{
+    t3ScreenClear();
+    printf("%s - '%c' | %s - '%c'\n",
+        players[0]->name, field.symbol_player_1,
+        players[1]->name, field.symbol_player_2);
+    t3FieldShow(&field, show_tips);
+}
 
 static void t3GameInit(
-    Player * player1, 
-    Player * player2)
+    Player        * player1, 
+    Player        * player2,
+    bool    const   show_tips_)
 {
     t3FieldInit(&field, 'x', 'o');
 
-    players[0] = player1;
-    players[1] = player2;
-
+    players[0]  = player1;
+    players[1]  = player2;
+    show_tips   = show_tips_;
     game_status = fs_in_progress;
 }
 
 static void t3GameLoop(void)
 {
     int player_turn = 0;
-    size_t field_pos;
+    uint field_pos;
 
+    t3GameShow();
     while (1)
     {
-        //field_pos = players[player_turn]->turn(&field);
-        field_pos = 0;
+        field_pos = players[player_turn]->turn(&field);
         if (field.cell[field_pos] != cell_empty)
             continue;
 
@@ -53,16 +65,15 @@ static void t3GameLoop(void)
         player_turn++;
         player_turn %= PLAYER_COUNT;
 
-        t3ScreenClear();
-        t3FieldShow(&field);
+        t3GameShow();
     }
-    t3ScreenClear();
 }
 
 static void t3GameOver(void)
 {
-    t3FieldShow(&field);
-    puts("\n");
+    show_tips = false;
+    t3GameShow();
+    puts("");
 
     if (fs_end_draw == game_status)
     {
@@ -83,10 +94,11 @@ static void t3GameOver(void)
 //==============    PUBLIC SECTION    ==============//
 
 void t3Game(
-    Player * player1,
-    Player * player2)
+    Player        * player1,
+    Player        * player2,
+    bool    const   show_tips_)
 {
-    t3GameInit(player1, player2);
+    t3GameInit(player1, player2, show_tips_);
     t3GameLoop();
     t3GameOver();
 }

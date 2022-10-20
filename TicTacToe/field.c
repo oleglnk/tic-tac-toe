@@ -39,7 +39,8 @@ void t3FieldCopy(
 }
 
 void t3FieldShow(
-	Field	const * field)
+	Field	const * field,
+    bool    const   show_tips)
 {
     for (int i = 0; i < FIELD_SIZE; i++)
     {
@@ -62,27 +63,28 @@ void t3FieldShow(
                 puts("---+---+---");
         }
     }
-#ifdef TIPS_ENABLED
-    puts("");
-    puts("Enter number of cell from 1 to 9 to make turn.");
-    puts("Except already filled cells.");
-
-    for (int i = 0; i < 9; i++)
+    if (show_tips)
     {
-        putchar(' ');
-        printf("%d", (i + 1));
-        putchar(' ');
+        puts("");
+        puts("Enter number of cell from 1 to 9 to make turn.");
+        puts("Except already filled cells.");
 
-        if ((i + 1) % FIELD_WIDTH != 0)
-            putchar('|');
-        else
+        for (int i = 0; i < 9; i++)
         {
-            putchar('\n');
-            if (i != FIELD_SIZE - 1)
-                puts("---+---+---");
+            putchar(' ');
+            printf("%d", (i + 1));
+            putchar(' ');
+
+            if ((i + 1) % FIELD_WIDTH != 0)
+                putchar('|');
+            else
+            {
+                putchar('\n');
+                if (i != FIELD_SIZE - 1)
+                    puts("---+---+---");
+            }
         }
     }
-#endif
 }
 
 FieldStatus t3FieldGetStatus(

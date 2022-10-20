@@ -21,14 +21,14 @@
 typedef struct Move_tag
 {
     int score;
-    int index;
+    uint index;
 } Move;
 
 typedef void(*MoveCompareAI)(Move * best_move, Move const * move, Cell const move_cur);
 
 static MoveCompareAI compare;
 static Field         ai_field;
-static size_t        empty_cell_count;
+static uint          empty_cell_count;
 
 static void t3MoveCompareNormAI(
     Move       * best_move,
@@ -100,7 +100,7 @@ static Move t3MiniMax(
     return best_move;
 }
 
-static size_t t3TurnPlayer(
+static uint t3TurnPlayer(
     Field const * field)
 {
     Key key;
@@ -113,7 +113,7 @@ static size_t t3TurnPlayer(
         }
         else
         {
-            size_t index = (size_t)key - (size_t)t3_key_num1;
+            uint index = (uint)key - (uint)t3_key_num1;
             if (field->cell[index] != cell_empty)
                 puts("Cell is already occupied! Please try again.");
             else
@@ -122,12 +122,12 @@ static size_t t3TurnPlayer(
     }
 }
 
-static size_t t3TurnAiEasy(
+static uint t3TurnAiEasy(
     Field const * field)
 {
     int max_chances = 0;
-    size_t index = FIELD_SIZE;
-    for (size_t i = 0; i < FIELD_SIZE; i++)
+    uint index = FIELD_SIZE;
+    for (uint i = 0; i < FIELD_SIZE; i++)
     {
         if (field->cell[i] == cell_empty)
         {
@@ -143,7 +143,7 @@ static size_t t3TurnAiEasy(
     return index;
 }
 
-static size_t t3TurnAiNorm(
+static uint t3TurnAiNorm(
     Field const * field)
 {
     compare = t3MoveCompareNormAI;
@@ -151,7 +151,7 @@ static size_t t3TurnAiNorm(
     return t3MiniMax(&ai_field, MOVE_AI).index;
 }
 
-static size_t t3TurnAiHard(
+static uint t3TurnAiHard(
     Field const * field)
 {
     compare = t3MoveCompareHardAI;
@@ -159,15 +159,14 @@ static size_t t3TurnAiHard(
     return t3MiniMax(&ai_field, MOVE_AI).index;
 }
 
-static char * t3RemoveSpaces(char * s)
+static void t3RemoveSpaces(char * src)
 {
-    char* d = s;
+    char* temp = src;
     do
     {
-        while (*d == ' ')
-            ++d;
-    } while (*s++ = *d++);
-    return s;
+        while ((*temp == ' ') || (*temp == '\n'))
+            ++temp;
+    } while (*src++ = *temp++);
 }
 
 static void t3NameGet(
@@ -185,12 +184,11 @@ static void t3NameGet(
     else
     {
         puts("Please enter player's name (20 characters maximum).");
-        size_t read_count;
         while (1)
         {
-            read_count = fread(name, sizeof(char), PLAYERNAME_SIZE_MAX, stdin);
-            name[read_count - 1] = '\0';
-            if (t3RemoveSpaces(name))
+            fgets(name, FILENAME_MAX, stdin);
+            t3RemoveSpaces(name);
+            if (name[0])
                 break;
             else
                 puts("Incorrect input!");

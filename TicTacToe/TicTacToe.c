@@ -62,7 +62,7 @@ static void t3MenuVersusAI(void)
             case t3_key_num2: t3PlayerFactory(&second_player, pl_ai_norm); break;
             case t3_key_num3: t3PlayerFactory(&second_player, pl_ai_hard); break;
             }
-            t3Game(&main_player, &second_player);
+            t3Game(&main_player, &second_player, true);
         }
     }
 }
@@ -79,7 +79,7 @@ static void t3MenuHotsit(void)
 
     t3PlayerFactory(&second_player, pl_human);
 
-    t3Game(&main_player, &second_player);
+    t3Game(&main_player, &second_player, true);
 }
 
 static void t3MenuCredits(void)
@@ -138,9 +138,11 @@ int main(int argc, char ** argv)
 {
     if (!t3IOInit())
 		return EXIT_FAILURE;
-	
+
+    srand((unsigned int)time(nullptr));
 	//t3ScreenClear();
     t3Logo(5.0f);
+    t3PlayerFactory(&main_player, pl_human);
 	t3MenuMain();
     
 	return EXIT_SUCCESS;
