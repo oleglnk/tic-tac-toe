@@ -103,72 +103,56 @@ static void    t3ScreenClearWin(void)
 #elif defined(__linux__) || defined(__unix__)
 
 #include <unistd.h>
-#include <term.h>
+#include <string.h>
 #include <termios.h>
 
 #define T3_UNIX_
 
-#define MAGIC_MAX_CHARS 18
-
-struct termios  initial_settings;
-struct termios  settings;
-unsigned char   keycodes[MAGIC_MAX_CHARS];
-int             count;
+struct termios  settings_original;
+struct termios  settings_keycatch;
 
 static bool    t3IOInitUnix(void)
 {
-    return TRUE;
+    tcgetattr(STDIN_FILENO, &settings_original);
+    tcgetattr(STDIN_FILENO, &settings_keycatch);
+
+    /* Set the console mode to no-echo, raw input. */
+    settings_keycatch.c_iflag &= ~(IXOFF);
+    settings_keycatch.c_lflag &= ~(ECHO | ICANON);
+    
+    return true;
 }
 
 static Key     t3GetKeyUnix(char const * prompt)
 {
-    Key    result = T3_KEY_UNDEFINED;
-
-    tcgetattr(STDIN_FILENO, &initial_settings);
-    settings = initial_settings;
-
-    /* Set the console mode to no-echo, raw input. */
-    /* The exact meaning of all this jazz will be discussed later. */
-    settings.c_cc[VTIME] = 1;
-    settings.c_cc[VMIN] = MAGIC_MAX_CHARS;
-    settings.c_iflag &= ~(IXOFF);
-    settings.c_lflag &= ~(ECHO | ICANON);
-    tcsetattr(STDIN_FILENO, TCSANOW, &settings);
+    tcsetattr(STDIN_FILENO, TCSANOW, &settings_keycatch);
 
     if (prompt)
         printf("%s", prompt);
 
-    count = read(stdin, (void*)keycodes, MAGIC_MAX_CHARS);
+    int character = fgetc(stdin);
 
-    tcsetattr(STDIN_FILENO, TCSANOW, &initial_settings);
+    tcsetattr(STDIN_FILENO, TCSANOW, &settings_original);
 
-    int k = (count == 1) ? keycodes[0] : -(int)(keycodes[count - 1]);
-    switch (k)
+    Key result = t3_key_None;
+    switch (character)
     {
-    case KEY_1: result = t3_key_num1;  break;
-    case KEY_2: result = t3_key_num2;  break;
-    case KEY_3: result = t3_key_num3;  break;
-    case KEY_4: result = t3_key_num4;  break;
-    case KEY_5: result = t3_key_num5;  break;
-    case KEY_6: result = t3_key_num6;  break;
-    case KEY_7: result = t3_key_num7;  break;
-    case KEY_8: result = t3_key_num8;  break;
-    case KEY_9: result = t3_key_num9;  break;
+    case 0x31: result = t3_key_num1;  break;
+    case 0x32: result = t3_key_num2;  break;
+    case 0x33: result = t3_key_num3;  break;
+    case 0x34: result = t3_key_num4;  break;
+    case 0x35: result = t3_key_num5;  break;
+    case 0x36: result = t3_key_num6;  break;
+    case 0x37: result = t3_key_num7;  break;
+    case 0x38: result = t3_key_num8;  break;
+    case 0x39: result = t3_key_num9;  break;
     }
     return result;
 }
 
 static void    t3ScreenClearUnix(void)
 {
-    if (!cur_term)
-    {
-        int result;
-        setupterm(NULL, STDOUT_FILENO, &result);
-        if (result <= 0)
-            return;
-    }
-
-    putp(tigetstr("clear"));
+    printf("\033[2J\033[1;1H");
 }
 
 #else
@@ -182,7 +166,7 @@ bool    t3IOInit(void)
 {
 #ifdef T3_WINDOWS_
     return t3IOInitWin();
-#elif T3_UNIX_
+#elif defined(T3_UNIX_)
     return t3IOInitUnix();
 #else
 #error Undefined function: InputClear
@@ -193,7 +177,7 @@ Key     t3GetKey(char const * prompt)
 {
 #ifdef T3_WINDOWS_
     return t3GetKeyWin(prompt);
-#elif T3_UNIX_
+#elif defined(T3_UNIX_)
     return t3GetKeyUnix(prompt);
 #else
 #error Undefined function: InputGet
@@ -204,7 +188,7 @@ void    t3ScreenClear(void)
 {
 #ifdef T3_WINDOWS_
     t3ScreenClearWin();
-#elif T3_UNIX_
+#elif defined(T3_UNIX_)
     t3ScreenClearUnix();
 #else
 #error Undefined function: ScreenClear

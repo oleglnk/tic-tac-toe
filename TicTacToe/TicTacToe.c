@@ -53,7 +53,10 @@ static void t3MenuVersusAI(void)
 
         if (t3_key_num4 == menu_choice)
             return;
-        else
+        else if (
+            (t3_key_num3 == menu_choice) ||
+            (t3_key_num2 == menu_choice) || 
+            (t3_key_num1 == menu_choice))
         {
             Player second_player;
             switch (menu_choice)
@@ -140,7 +143,7 @@ int main(int argc, char ** argv)
 		return EXIT_FAILURE;
 
     srand((unsigned int)time(nullptr));
-	//t3ScreenClear();
+	t3ScreenClear();
     t3Logo(5.0f);
     t3PlayerFactory(&main_player, pl_human);
 	t3MenuMain();

@@ -15,90 +15,7 @@
 
 //=============    PRIVATE SECTION    ==============//
 
-#define MOVE_AI_HUMAN    cell_player1
-#define MOVE_AI          cell_player2
-
-typedef struct Move_tag
-{
-    int score;
-    uint index;
-} Move;
-
-typedef void(*MoveCompareAI)(Move * best_move, Move const * move, Cell const move_cur);
-
-static MoveCompareAI compare;
 static Field         ai_field;
-static uint          empty_cell_count;
-
-static void t3MoveCompareNormAI(
-    Move       * best_move,
-    Move const * move,
-    Cell const   move_cur)
-{
-    if (move->score > best_move->score)
-    {
-        best_move->score = move->score;
-        best_move->index = move->index;
-    }
-}
-
-static void t3MoveCompareHardAI(
-    Move       * best_move,
-    Move const * move,
-    Cell const   move_cur)
-{
-    if (move_cur == MOVE_AI)
-    {
-        if (move->score > best_move->score)
-        {
-            best_move->score = move->score;
-            best_move->index = move->index;
-        }
-    }
-    else
-    {
-        if (move->score < best_move->score)
-        {
-            best_move->score = move->score;
-            best_move->index = move->index;
-        }
-    }
-}
-
-static Move t3MiniMax(
-    Field       * field,
-    Cell  const   move_cur)
-{
-    Move move, best_move;
-    best_move.score = (move_cur == MOVE_AI) ? -10000 : 10000;
-    int i = 0;
-    best_move.index = 0;
-    while (i < FIELD_SIZE)
-    {
-        if (cell_empty == field->cell[i])
-        {
-            field->empty_cell_count--;
-            field->cell[i] = move_cur;
-
-            switch (t3FieldGetStatus(field))
-            {
-            case fs_in_progress:
-                move = t3MiniMax(field, (MOVE_AI_HUMAN == move_cur) ? MOVE_AI : MOVE_AI_HUMAN);
-                break;
-            case fs_end_win_p1: move.score = -1; break;
-            case fs_end_win_p2: move.score = +1; break;
-            default:            move.score =  0; break;
-            }
-
-            field->cell[i] = cell_empty;
-            empty_cell_count++;
-
-            compare(&best_move, &move, move_cur);
-        }
-        i++;
-    }
-    return best_move;
-}
 
 static uint t3TurnPlayer(
     Field const * field)
@@ -143,20 +60,97 @@ static uint t3TurnAiEasy(
     return index;
 }
 
+static int t3MiniMax(
+    Field       * field,
+    bool  const   isMaximizing)
+{
+    switch (t3FieldGetStatus(field))
+    {
+    case fs_end_win_p1: return -1;
+    case fs_end_win_p2: return +1;
+    case fs_end_draw:   return 0;
+    }
+
+    int best_score = isMaximizing ? -10000 : 10000;
+    for (uint i = 0; i < FIELD_SIZE; i++)
+    {
+        if (cell_empty == field->cell[i])
+        {
+            field->cell[i] = isMaximizing ? cell_player2 : cell_player1;
+            field->empty_cell_count--;
+
+            int score = t3MiniMax(field, !isMaximizing);
+
+            field->cell[i] = cell_empty;
+            field->empty_cell_count++;
+
+            if (isMaximizing)
+                best_score = (score > best_score) ? score : best_score;
+            else
+                best_score = (score < best_score) ? score : best_score;
+        }
+    }
+    return best_score;
+}
+
 static uint t3TurnAiNorm(
     Field const * field)
 {
-    compare = t3MoveCompareNormAI;
     t3FieldCopy(&ai_field, field);
-    return t3MiniMax(&ai_field, MOVE_AI).index;
+    int best_score = -10000;
+    uint best_index;
+    int max_chances = -1;
+    for (uint i = 0; i < FIELD_SIZE; i++)
+    {
+        if (cell_empty == ai_field.cell[i])
+        {
+            ai_field.cell[i] = cell_player2;
+            ai_field.empty_cell_count--;
+
+            int score = t3MiniMax(&ai_field, false);
+            int chances = rand();
+
+            ai_field.cell[i] = cell_empty;
+            ai_field.empty_cell_count++;
+            
+            if ((score > best_score) && 
+                (max_chances < chances))
+            {
+                best_score = score;
+                best_index = i;
+                max_chances = chances;
+            }
+        }
+    }
+    return best_index;
 }
 
 static uint t3TurnAiHard(
     Field const * field)
 {
-    compare = t3MoveCompareHardAI;
     t3FieldCopy(&ai_field, field);
-    return t3MiniMax(&ai_field, MOVE_AI).index;
+    int best_score = -10000;
+    uint best_index;
+    for (uint i = 0; i < FIELD_SIZE; i++)
+    {
+        if (cell_empty == ai_field.cell[i])
+        {
+            ai_field.cell[i] = cell_player2;
+            ai_field.empty_cell_count--;
+
+            int score = t3MiniMax(&ai_field, false);
+
+            ai_field.cell[i] = cell_empty;
+            ai_field.empty_cell_count++;
+            
+            if (score > best_score)
+            {
+                best_score = score;
+                best_index = i;
+            }
+        }
+    }
+    return best_index;
 }
 
 static void t3RemoveSpaces(char * src)
