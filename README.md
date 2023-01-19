@@ -40,14 +40,12 @@ compile code to file named `TicTacToe` (you can use other names)
 
 Congratulations game is ready to start, just run `./TicTacToe` to run it.
 
-
 ## Known Issues
 
 1. This implementaion of minimax algorithm is not fully optimal and there is a small bug. Also this 
 bug easy to find in different impementations which are very popular results in google search. 
 I don't want to look for a reason (I already hate this code). If you tell me the reason I will be 
-grateful to you for this. I don't tell where is a bug - try to find it by yourself, if not: just 
-read my article (link in the end).
+grateful to you for this. I don't tell where is a bug - try to find it by yourself.
 2. Normal AI is very dumb, even more dumber than Easy AI. There is an idea how to fix it (thanks to 
 my friend) but as I already said: I already hate this code. Your ideas are welcome.
 3. **This is not issue of my project. It's a bug of Visual Studio and MSVC compiler.** If you change 
@@ -61,11 +59,3 @@ If you find any other issues, please tell me.
 ## TODO
 
 Passionately wait for C23 to delete unnecessary code.
-
-## Links
-
-You can read additional information in my blog (section 'Projects').
-
-**My website** - [link](https://oleglnk.pages.dev/).
-
-**About project** - [link](https://oleglnk.pages.dev/projects/tic-tac-toe/).
